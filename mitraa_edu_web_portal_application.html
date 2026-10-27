@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiTRAA-Edu | Unified Educational Management Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#1d4ed8',
+                            800: '#1e3a8a',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0284c7 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800 antialiased">
+
+    <!-- Top Global Bar -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- Main Navigation Header -->
+    <header class="gradient-header text-white sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchRole(currentRole)">
+                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center font-black text-xl text-sky-400">
+                    M
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight leading-tight flex items-center gap-2">
+                        MiTRAA<span class="text-sky-400">–Edu</span>
+                        <span class="bg-sky-500/30 text-sky-200 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-sky-400/30">v2.4 Enterprise</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-300 font-medium">Multi-Tenant Educational OS</p>
+                </div>
+            </div>
+
+            <!-- Role Quick Switcher (Top Bar for Demo & Recruiter Testing) -->
+            <div class="hidden md:flex items-center gap-2 bg-white/10 p-1 rounded-xl border border-white/15">
+                <span class="text-xs text-sky-200 font-semibold px-2">Role Demo:</span>
+                <button onclick="switchRole('STUDENT')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-STUDENT"><i class="fa-solid fa-user-graduate mr-1"></i> Student</button>
+                <button onclick="switchRole('TEACHER')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-TEACHER"><i class="fa-solid fa-chalkboard-user mr-1"></i> Teacher</button>
+                <button onclick="switchRole('PARENT')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-PARENT"><i class="fa-solid fa-users-rectangle mr-1"></i> Parent</button>
+                <button onclick="switchRole('PRINCIPAL')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-PRINCIPAL"><i class="fa-solid fa-building-columns mr-1"></i> Principal</button>
+                <button onclick="switchRole('TRUSTEE')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-TRUSTEE"><i class="fa-solid fa-chart-pie mr-1"></i> Trustee</button>
+                <button onclick="switchRole('EXAM')" class="role-btn text-xs px-2.5 py-1 rounded-lg font-medium transition text-white hover:bg-white/10" id="btn-EXAM"><i class="fa-solid fa-file-shield mr-1"></i> Exam Controller</button>
+            </div>
+
+            <!-- User Status & Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('notification-modal')" class="relative p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-slate-200">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                </button>
+                <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center font-bold text-xs text-white shadow" id="user-avatar">
+                        VP
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <div class="text-xs font-bold leading-none text-white" id="user-name">Vikas Prajapat</div>
+                        <div class="text-[10px] text-sky-200 font-semibold" id="user-role-label">Student Context</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Mobile Role Selection Switcher -->
+    <div class="md:hidden bg-slate-900 px-3 py-2 overflow-x-auto flex items-center gap-2 border-b border-slate-800 custom-scrollbar">
+        <span class="text-[11px] text-slate-400 font-semibold whitespace-nowrap">Switch Role:</span>
+        <button onclick="switchRole('STUDENT')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Student</button>
+        <button onclick="switchRole('TEACHER')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Teacher</button>
+        <button onclick="switchRole('PARENT')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Parent</button>
+        <button onclick="switchRole('PRINCIPAL')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Principal</button>
+        <button onclick="switchRole('TRUSTEE')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Trustee</button>
+        <button onclick="switchRole('EXAM')" class="text-xs whitespace-nowrap px-2.5 py-1 bg-slate-800 text-slate-200 rounded-md">Exam Controller</button>
+    </div>
+
+    <!-- MAIN CONTAINER AREA -->
+    <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
+
+        <!-- Context Control Bar (Tenant/Campus/Child Contexts) -->
+        <div id="context-bar" class="mb-6 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="p-2 rounded-xl bg-sky-50 text-sky-600 font-bold text-sm">
+                    <i class="fa-solid fa-sitemap"></i>
+                </span>
+                <div>
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block">Scope Context</span>
+                    <span class="text-sm font-bold text-slate-800" id="context-title">Jaipur Public Academy (Main Campus)</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Context Dropdown (Multi-Child / Multi-Campus) -->
+            <div id="dynamic-context-selector" class="flex items-center gap-2">
+                <!-- Injected via JS based on role -->
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 1. STUDENT DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-STUDENT" class="role-view space-y-6">
+            
+            <!-- Quick Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Overall Attendance</p>
+                        <h3 class="text-2xl font-black text-slate-800 mt-1">94.2%</h3>
+                        <p class="text-xs text-emerald-600 font-semibold mt-1"><i class="fa-solid fa-arrow-up mr-1"></i>+1.5% this month</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Assignments</p>
+                        <h3 class="text-2xl font-black text-amber-600 mt-1">3 Due</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Next due tomorrow</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-file-pen"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">PracticePod Level</p>
+                        <h3 class="text-2xl font-black text-sky-600 mt-1">Level 8</h3>
+                        <p class="text-xs text-sky-600 font-semibold mt-1">1,240 XP Earned</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Next Exam</p>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">Physics Mid-Term</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Oct 14 • 10:00 AM</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Split -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Left 2 Columns: Active Assignments & PracticePod Launcher -->
+                <div class="lg:col-span-2 space-y-6">
+                    
+                    <!-- PracticePod CTA Banner -->
+                    <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-sky-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                        <div class="relative z-10">
+                            <span class="bg-sky-400/20 text-sky-200 text-xs font-bold px-3 py-1 rounded-full border border-sky-400/30">
+                                🚀 PracticePod Dynamic Quiz Engine
+                            </span>
+                            <h2 class="text-2xl font-extrabold mt-3">Boost Your Learning & Clear Gaps</h2>
+                            <p class="text-sky-100 text-sm mt-1 max-w-xl">Generate instant AI-driven practice quizzes customized to your Grade 10 Mathematics & Science syllabus.</p>
+                            
+                            <div class="mt-5 flex flex-wrap gap-3">
+                                <button onclick="startPracticeQuiz()" class="bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-play"></i> Start Practice Quiz Now
+                                </button>
+                                <button onclick="showToast('Downloading Print Practice Worksheet...', 'info')" class="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-white/20 transition flex items-center gap-2 cursor-pointer">
+                                    <i class="fa-solid fa-print"></i> Download Print Mode PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Assignments Card -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                                <i class="fa-solid fa-tasks text-sky-600"></i> Active Assignments
+                            </h3>
+                            <span class="text-xs font-semibold text-slate-400">Class 10 - Section A</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <!-- Assignment Item 1 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-sky-300 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">Mathematics</span>
+                                        <span class="text-xs text-amber-600 font-bold"><i class="fa-solid fa-clock mr-1"></i>Due Tomorrow, 11:59 PM</span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm">Quadratic Equations & Polynomial Solutions</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Solve questions 1 to 15 from Chapter 4 Exercise sheet.</p>
+                                </div>
+                                <button onclick="openAssignmentModal('Quadratic Equations')" class="bg-slate-900 hover:bg-sky-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition whitespace-nowrap">
+                                    Submit Work
+                                </button>
+                            </div>
+
+                            <!-- Assignment Item 2 -->
+                            <div class="p-4 rounded-xl border border-slate-200 hover:border-sky-300 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded">Physics</span>
+                                        <span class="text-xs text-slate-500 font-medium"><i class="fa-solid fa-calendar mr-1"></i>Due Oct 12, 2026</span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 text-sm">Light Reflection & Refraction Lab Report</h4>
+                                    <p class="text-xs text-slate-500 mt-0.5">Attach ray diagrams and focal length calculation table.</p>
+                                </div>
+                                <button onclick="openAssignmentModal('Physics Lab Report')" class="bg-slate-900 hover:bg-sky-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition whitespace-nowrap">
+                                    Submit Work
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Timetable & Performance Quick View -->
+                <div class="space-y-6">
+                    
+                    <!-- Today's Class Schedule -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                        <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-sky-600"></i> Today's Schedule
+                        </h3>
+                        <div class="space-y-2.5 text-xs">
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-slate-800">Mathematics</p>
+                                    <p class="text-slate-400 text-[11px]">Room 204 • Mr. Sharma</p>
+                                </div>
+                                <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Ongoing</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-slate-800">Physics Lab</p>
+                                    <p class="text-slate-400 text-[11px]">Science Lab 2 • Dr. Verma</p>
+                                </div>
+                                <span class="text-slate-500 font-semibold text-[11px]">11:15 AM</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-slate-800">English Literature</p>
+                                    <p class="text-slate-400 text-[11px]">Room 102 • Mrs. Gupta</p>
+                                </div>
+                                <span class="text-slate-500 font-semibold text-[11px]">01:30 PM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subject Wise Performance Chart -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                        <h3 class="font-bold text-slate-800 text-base mb-3">Academic Performance</h3>
+                        <canvas id="studentPerfChart" class="w-full max-h-48"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 2. TEACHER DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-TEACHER" class="role-view space-y-6 hidden">
+            
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Teacher Control Center</h2>
+                    <p class="text-xs text-slate-500">Welcome back, Mr. Sharma • Department of Mathematics</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openModal('create-assignment-modal')" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Create Assignment
+                    </button>
+                    <button onclick="openModal('question-bank-modal')" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-database"></i> Question Bank
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Quick Attendance Marking Grid -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base">Quick Attendance Marking</h3>
+                            <p class="text-xs text-slate-400">Class 10 - Section A • Period 3 (Mathematics)</p>
+                        </div>
+                        <button onclick="saveAttendance()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Submit Attendance
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                                    <th class="p-3">Roll No</th>
+                                    <th class="p-3">Student Name</th>
+                                    <th class="p-3">Previous %</th>
+                                    <th class="p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr>
+                                    <td class="p-3 font-bold">1001</td>
+                                    <td class="p-3">Aarav Sharma</td>
+                                    <td class="p-3 text-emerald-600 font-semibold">96%</td>
+                                    <td class="p-3 text-center">
+                                        <button onclick="toggleAttendance(this)" class="att-btn bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg text-xs">PRESENT</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold">1002</td>
+                                    <td class="p-3">Ananya Verma</td>
+                                    <td class="p-3 text-emerald-600 font-semibold">92%</td>
+                                    <td class="p-3 text-center">
+                                        <button onclick="toggleAttendance(this)" class="att-btn bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg text-xs">PRESENT</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-bold">1003</td>
+                                    <td class="p-3">Rohan Gupta</td>
+                                    <td class="p-3 text-amber-600 font-semibold">78%</td>
+                                    <td class="p-3 text-center">
+                                        <button onclick="toggleAttendance(this)" class="att-btn bg-red-100 text-red-800 font-bold px-3 py-1 rounded-lg text-xs">ABSENT</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Un-evaluated Submissions Panel -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                    <h3 class="font-bold text-slate-800 text-base mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-sky-600"></i> Pending Grading
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <p class="font-bold text-slate-800">Algebra Unit Test - Paper B</p>
+                            <p class="text-slate-400 mt-0.5">32 Submissions to grade</p>
+                            <button onclick="showToast('Loading grading panel...', 'info')" class="mt-2 text-sky-600 font-bold hover:underline">Start Review &rarr;</button>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <p class="font-bold text-slate-800">Geometry Homework 3</p>
+                            <p class="text-slate-400 mt-0.5">18 Submissions to grade</p>
+                            <button onclick="showToast('Loading grading panel...', 'info')" class="mt-2 text-sky-600 font-bold hover:underline">Start Review &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 3. PARENT DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-PARENT" class="role-view space-y-6 hidden">
+            
+            <div class="bg-gradient-to-r from-slate-900 to-blue-900 text-white rounded-2xl p-6 shadow-md flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span class="bg-sky-400/20 text-sky-200 text-xs font-bold px-2.5 py-1 rounded-md">Parent Context Switcher</span>
+                    <h2 class="text-xl font-extrabold mt-2" id="parent-child-title">Child Profile: Aarav Sharma (Grade 10A)</h2>
+                    <p class="text-xs text-slate-300 mt-0.5">Track daily attendance, homework submissions, teacher remarks & fee status.</p>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="openModal('ptm-modal')" class="bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                        <i class="fa-solid fa-calendar-plus mr-1"></i> Book PTM Slot
+                    </button>
+                    <button onclick="openModal('fee-modal')" class="bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                        <i class="fa-solid fa-credit-card mr-1"></i> Pay Fee (₹ 12,500)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parent Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase">Recent Teacher Remark</h4>
+                    <p class="text-xs font-medium text-slate-700 mt-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        "Aarav shows great improvement in Mathematics calculus. Needs a bit more focus on chemistry formulas."
+                    </p>
+                    <p class="text-[11px] text-slate-400 mt-2 text-right">— Mr. Sharma (Math HOD)</p>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase">Quarter 2 Fee Status</h4>
+                    <div class="mt-2 flex items-center justify-between">
+                        <div>
+                            <span class="text-lg font-bold text-slate-900">₹ 12,500</span>
+                            <p class="text-xs text-amber-600 font-semibold">Due Date: Oct 20, 2026</p>
+                        </div>
+                        <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg">Unpaid</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase">PracticePod Weekly Drill</h4>
+                    <p class="text-sm font-bold text-slate-800 mt-2">4 Practice Sets Completed</p>
+                    <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+                        <div class="bg-sky-500 h-full w-4/5"></div>
+                    </div>
+                    <p class="text-[11px] text-sky-600 font-bold mt-1">80% Accuracy Score</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 4. PRINCIPAL DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-PRINCIPAL" class="role-view space-y-6 hidden">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Campus Academic Progress</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">88.4%</h3>
+                    <p class="text-xs text-emerald-600 font-semibold">Syllabus on schedule</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Staff Attendance</p>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">97.1%</h3>
+                    <p class="text-xs text-slate-500">42/43 Teachers Present</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Open Grievances</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1">2 Tickets</h3>
+                    <p class="text-xs text-amber-600 font-semibold">Requires Approval</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Exam Paper Approvals</p>
+                    <h3 class="text-2xl font-black text-sky-600 mt-1">5 Pending</h3>
+                    <p class="text-xs text-slate-500">Mid-term Papers</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-800 text-base mb-4">Academic Syllabus Coverage (Planned vs Actual)</h3>
+                <canvas id="principalSyllabusChart" class="w-full max-h-64"></canvas>
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 5. MANAGEMENT / TRUSTEE DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-TRUSTEE" class="role-view space-y-6 hidden">
+            
+            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-md">Multi-Campus Executive Overview</span>
+                    <h2 class="text-2xl font-black mt-2">Trustee Board Command Center</h2>
+                    <p class="text-xs text-slate-300 mt-0.5">Consolidated real-time operational & revenue metrics across 3 Campuses.</p>
+                </div>
+                <button onclick="showToast('Generating Consolidated PDF Report...', 'success')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold px-5 py-2.5 rounded-xl transition shadow">
+                    <i class="fa-solid fa-file-pdf mr-1"></i> Export Executive Report
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-400 font-bold uppercase">Total Fee Collection (YTD)</span>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">₹ 2.45 Cr</h3>
+                    <p class="text-xs text-emerald-600 font-semibold mt-1"><i class="fa-solid fa-arrow-up mr-1"></i>+12.4% vs last year</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-400 font-bold uppercase">Total Enrolled Students</span>
+                    <h3 class="text-2xl font-black text-slate-900 mt-1">1,850 Students</h3>
+                    <p class="text-xs text-sky-600 font-semibold mt-1">Across 3 Campuses</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <span class="text-xs text-slate-400 font-bold uppercase">Pending Outstanding Dues</span>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1">₹ 18.2 Lakhs</h3>
+                    <p class="text-xs text-slate-500 mt-1">Follow-up active</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-800 text-base mb-4">Multi-Campus Performance Comparison</h3>
+                <canvas id="campusCompareChart" class="w-full max-h-60"></canvas>
+            </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- 6. EXAM CONTROLLER (PHASE 2) DASHBOARD -->
+        <!-- ========================================================= -->
+        <section id="view-EXAM" class="role-view space-y-6 hidden">
+            
+            <div class="bg-red-950 text-white p-6 rounded-2xl border border-red-900 shadow-xl flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <span class="bg-red-500/30 text-red-200 text-xs font-bold px-2.5 py-1 rounded-md border border-red-400/30">
+                        <i class="fa-solid fa-lock mr-1"></i> Restricted Area • Phase 2 Engine
+                    </span>
+                    <h2 class="text-2xl font-black mt-2">Exam Controller Panel</h2>
+                    <p class="text-xs text-red-200 mt-0.5">Centralized paper encryption, candidate centre allocation & live exam operations.</p>
+                </div>
+                <button onclick="showToast('All Mid-Term Question Papers Locked with 256-bit AES Encryption', 'warning')" class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition">
+                    <i class="fa-solid fa-key mr-1"></i> Encrypt & Lock Papers
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base mb-3">Live Exam Day Incident Log</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                            <span>Center 101 - Main Hall: 250 Candidates Seated</span>
+                            <span class="text-emerald-600 font-bold">NORMAL</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                            <span>Center 102 - Lab B: Paper Decrypted & Printed</span>
+                            <span class="text-emerald-600 font-bold">VERIFIED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 text-base mb-3">Paper Assembly Status</h3>
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="font-semibold text-slate-700">Class 10 Mathematics Paper B</span>
+                                <span class="text-emerald-600 font-bold">Ready & Approved</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODALS SECTION -->
+
+    <!-- Assignment Submission Modal -->
+    <div id="assignment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100">
+            <button onclick="closeModal('assignment-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-bold text-slate-900 mb-1" id="assign-modal-title">Submit Assignment</h3>
+            <p class="text-xs text-slate-500 mb-4">Attach your completed solution PDF or written photos.</p>
+
+            <form onsubmit="handleAssignmentSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">Upload File (PDF / Images)</label>
+                    <input type="file" required class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-slate-50">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">Student Comments / Note</label>
+                    <textarea placeholder="Any additional notes for teacher..." class="w-full text-xs p-2.5 border border-slate-200 rounded-xl bg-slate-50 h-20"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold py-3 rounded-xl shadow transition">
+                    Confirm & Submit File
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PracticePod Quiz Modal -->
+    <div id="practice-quiz-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative border border-slate-100">
+            <button onclick="closeModal('practice-quiz-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded uppercase">PracticePod Interactive MCQ</span>
+                    <h3 class="text-base font-extrabold text-slate-900">Mathematics: Chapter 4 Quiz</h3>
+                </div>
+                <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg">
+                    <i class="fa-solid fa-stopwatch mr-1"></i>04:52
+                </span>
+            </div>
+
+            <!-- Quiz Question Content -->
+            <div id="quiz-question-box" class="space-y-4">
+                <p class="text-sm font-bold text-slate-800">Q1. What are the roots of the quadratic equation $x^2 - 5x + 6 = 0$?</p>
+                <div class="space-y-2 text-xs">
+                    <button onclick="selectQuizOption(this)" class="quiz-opt w-full text-left p-3 rounded-xl border border-slate-200 hover:border-sky-500 font-medium">A) x = 2 and x = 3</button>
+                    <button onclick="selectQuizOption(this)" class="quiz-opt w-full text-left p-3 rounded-xl border border-slate-200 hover:border-sky-500 font-medium">B) x = -2 and x = -3</button>
+                    <button onclick="selectQuizOption(this)" class="quiz-opt w-full text-left p-3 rounded-xl border border-slate-200 hover:border-sky-500 font-medium">C) x = 1 and x = 5</button>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="finishQuiz()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow transition">
+                    Submit Answer & View Solution
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fee Payment Modal -->
+    <div id="fee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('fee-modal')" class="absolute top-4 right-4 text-slate-400">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Pay Quarter 2 School Fee</h3>
+            <p class="text-xs text-slate-500 mb-4">Secure Online Payment Gateway Integration</p>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-xs space-y-1">
+                <div class="flex justify-between"><span>Tuition Fee:</span><span class="font-bold">₹ 10,000</span></div>
+                <div class="flex justify-between"><span>Lab & Library:</span><span class="font-bold">₹ 2,500</span></div>
+                <div class="flex justify-between border-t border-slate-200 pt-1 font-bold text-slate-900"><span>Total Payable:</span><span>₹ 12,500</span></div>
+            </div>
+
+            <button onclick="confirmFeePay()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-3 rounded-xl shadow transition">
+                Proceed to Pay ₹ 12,500
+            </button>
+        </div>
+    </div>
+
+    <!-- PTM Booking Modal -->
+    <div id="ptm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('ptm-modal')" class="absolute top-4 right-4 text-slate-400">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Book Parent-Teacher Meeting</h3>
+            <p class="text-xs text-slate-500 mb-4">Select teacher & preferred time slot.</p>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Select Teacher</label>
+                    <select class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50">
+                        <option>Mr. Sharma (Mathematics)</option>
+                        <option>Dr. Verma (Physics)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Select Date & Time Slot</label>
+                    <input type="datetime-local" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50">
+                </div>
+                <button onclick="confirmPTM()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl transition mt-2">
+                    Request PTM Slot
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        let currentRole = 'STUDENT';
+        let charts = {};
+
+        // Role Data & Configuration
+        const roleConfig = {
+            STUDENT: {
+                name: 'Vikas Prajapat',
+                roleLabel: 'Student Context',
+                contextTitle: 'Jaipur Public Academy (Grade 10 - Sec A)',
+                avatar: 'VP',
+                contextSelectorHTML: `<span class="text-xs font-bold text-slate-500">Class: 10th A</span>`
+            },
+            TEACHER: {
+                name: 'Mr. Sharma',
+                roleLabel: 'Teacher Context',
+                contextTitle: 'Dept. of Mathematics • Class 10A & 11B',
+                avatar: 'MS',
+                contextSelectorHTML: `<span class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">3 Classes Assigned</span>`
+            },
+            PARENT: {
+                name: 'Ramesh Sharma',
+                roleLabel: 'Parent / Guardian Context',
+                contextTitle: 'Parent Portal • Switch Active Child:',
+                avatar: 'RS',
+                contextSelectorHTML: `
+                    <select onchange="changeChild(this.value)" class="text-xs font-bold bg-slate-100 border border-slate-300 rounded-lg p-1.5 text-slate-800">
+                        <option value="Aarav Sharma (Grade 10A)">Aarav Sharma (Grade 10A)</option>
+                        <option value="Ananya Sharma (Grade 6B)">Ananya Sharma (Grade 6B)</option>
+                    </select>
+                `
+            },
+            PRINCIPAL: {
+                name: 'Dr. R.K. Mehta',
+                roleLabel: 'Principal / HOD Context',
+                contextTitle: 'Jaipur Main Campus Overview',
+                avatar: 'RM',
+                contextSelectorHTML: `<span class="text-xs font-bold bg-purple-100 text-purple-800 px-2.5 py-1 rounded-lg">Full Campus Access</span>`
+            },
+            TRUSTEE: {
+                name: 'Executive Management',
+                roleLabel: 'Trustee / Board Context',
+                contextTitle: 'Multi-Campus Enterprise Switcher:',
+                avatar: 'TB',
+                contextSelectorHTML: `
+                    <select class="text-xs font-bold bg-slate-900 text-white border border-slate-700 rounded-lg p-1.5">
+                        <option>Consolidated (All 3 Campuses)</option>
+                        <option>Jaipur Main Campus</option>
+                        <option>North Delhi Campus</option>
+                    </select>
+                `
+            },
+            EXAM: {
+                name: 'Exam Controller',
+                roleLabel: 'Controller Context (Phase 2)',
+                contextTitle: 'Central Examination Board Operations',
+                avatar: 'EC',
+                contextSelectorHTML: `<span class="text-xs font-bold bg-red-100 text-red-800 px-2 py-1 rounded">256-bit AES Lock Active</span>`
+            }
+        };
+
+        // Switch Role Handler
+        function switchRole(roleKey) {
+            currentRole = roleKey;
+            
+            // Hide all views
+            document.querySelectorAll('.role-view').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected view
+            const targetView = document.getElementById(`view-${roleKey}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            // Update Header User Info
+            const config = roleConfig[roleKey];
+            document.getElementById('user-name').innerText = config.name;
+            document.getElementById('user-role-label').innerText = config.roleLabel;
+            document.getElementById('user-avatar').innerText = config.avatar;
+            document.getElementById('context-title').innerText = config.contextTitle;
+            document.getElementById('dynamic-context-selector').innerHTML = config.contextSelectorHTML;
+
+            // Highlight top bar buttons
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('bg-white/20', 'font-bold', 'border', 'border-white/30');
+            });
+            const activeBtn = document.getElementById(`btn-${roleKey}`);
+            if (activeBtn) activeBtn.classList.add('bg-white/20', 'font-bold', 'border', 'border-white/30');
+
+            showToast(`Switched to ${config.roleLabel}`, 'info');
+
+            // Render Charts when switching views
+            setTimeout(() => renderCharts(), 100);
+        }
+
+        // Attendance toggle helper
+        function toggleAttendance(btn) {
+            if (btn.innerText === 'PRESENT') {
+                btn.innerText = 'ABSENT';
+                btn.className = 'att-btn bg-red-100 text-red-800 font-bold px-3 py-1 rounded-lg text-xs';
+            } else {
+                btn.innerText = 'PRESENT';
+                btn.className = 'att-btn bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg text-xs';
+            }
+        }
+
+        function saveAttendance() {
+            showToast('Attendance recorded and synced with Parent Portal!', 'success');
+        }
+
+        // Parent Child Switcher
+        function changeChild(childName) {
+            document.getElementById('parent-child-title').innerText = `Child Profile: ${childName}`;
+            showToast(`Context updated to ${childName}`, 'info');
+        }
+
+        // Modal Handlers
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function openAssignmentModal(title) {
+            document.getElementById('assign-modal-title').innerText = `Submit: ${title}`;
+            openModal('assignment-modal');
+        }
+
+        function handleAssignmentSubmit(e) {
+            e.preventDefault();
+            closeModal('assignment-modal');
+            showToast('Assignment uploaded successfully! Teacher notified.', 'success');
+        }
+
+        function startPracticeQuiz() {
+            openModal('practice-quiz-modal');
+        }
+
+        function selectQuizOption(btn) {
+            document.querySelectorAll('.quiz-opt').forEach(b => b.classList.remove('bg-sky-50', 'border-sky-500', 'font-bold'));
+            btn.classList.add('bg-sky-50', 'border-sky-500', 'font-bold');
+        }
+
+        function finishQuiz() {
+            closeModal('practice-quiz-modal');
+            showToast('Quiz Completed! Score: 100% (+50 XP added to PracticePod)', 'success');
+        }
+
+        function confirmFeePay() {
+            closeModal('fee-modal');
+            showToast('Payment Successful! Receipt generated and emailed.', 'success');
+        }
+
+        function confirmPTM() {
+            closeModal('ptm-modal');
+            showToast('PTM Slot Request Sent to Teacher!', 'success');
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-slate-900 text-white';
+            if (type === 'success') bg = 'bg-emerald-700 text-white';
+            if (type === 'warning') bg = 'bg-amber-600 text-white';
+
+            toast.className = `${bg} px-4 py-3 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 transition-all transform duration-300 translate-y-0`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Chart.js Rendering
+        function renderCharts() {
+            // Student Chart
+            const studentCtx = document.getElementById('studentPerfChart');
+            if (studentCtx && !charts.student) {
+                charts.student = new Chart(studentCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Math', 'Physics', 'Chemistry', 'English', 'Social Science'],
+                        datasets: [{
+                            label: 'Your Score (%)',
+                            data: [92, 88, 79, 95, 85],
+                            backgroundColor: 'rgba(2, 132, 199, 0.2)',
+                            borderColor: '#0284c7',
+                            pointBackgroundColor: '#0284c7'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Principal Chart
+            const principalCtx = document.getElementById('principalSyllabusChart');
+            if (principalCtx && !charts.principal) {
+                charts.principal = new Chart(principalCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'],
+                        datasets: [
+                            { label: 'Planned %', data: [90, 85, 95, 80, 88], backgroundColor: '#cbd5e1' },
+                            { label: 'Completed %', data: [88, 82, 92, 78, 85], backgroundColor: '#1d4ed8' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Trustee Chart
+            const trusteeCtx = document.getElementById('campusCompareChart');
+            if (trusteeCtx && !charts.trustee) {
+                charts.trustee = new Chart(trusteeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [
+                            { label: 'Jaipur Main', data: [40, 55, 60, 75, 85, 95], borderColor: '#0284c7', fill: false },
+                            { label: 'North Delhi', data: [30, 45, 50, 65, 70, 82], borderColor: '#10b981', fill: false }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+
+        // Initialize App on Load
+        window.onload = function() {
+            switchRole('STUDENT');
+        };
+    </script>
+</body>
+</html>
+
